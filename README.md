@@ -5,3 +5,4 @@
   ## Kullanmak için öncelikle;
 !pip install gradio
   ## Kodunu kullanarak web arayüz destekleyici kütüphanemizi yazılım dilimize yüklememiz gerekiyor.
+![Ekran görüntüsü 2025-05-20 213057](https://github.com/user-attachments/assets/b6540864-32ce-48f4-bcf0-1879911f6adf)
