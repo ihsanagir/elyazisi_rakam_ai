@@ -1,0 +1,106 @@
+import numpy as np
+from sklearn.datasets import load_digits
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from PIL import Image, ImageOps
+import gradio as gr
+import traceback
+
+
+digits = load_digits()
+X = digits.images
+y = digits.target
+X_flat = X.reshape((X.shape[0], -1))
+
+X_train, X_test, y_train, y_test = train_test_split(X_flat, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier(n_estimators=100, random_state=42) 
+model.fit(X_train, y_train)
+
+test_accuracy = model.score(X_test, y_test)
+print(f"Modelin load_digits test setindeki doğruluğu: {test_accuracy:.4f}")
+
+
+def predict_digit_and_visualize(img_input):
+    try:
+        print(f"DEBUG: predict_digit_and_visualize fonksiyonuna gelen girdi: {img_input}")
+        print(f"DEBUG: Girdinin tipi: {type(img_input)}")
+
+        if img_input is None:
+            # Boş bir 8x8 görüntü döndür hata durumunda
+            blank_image = np.zeros((8, 8), dtype=np.uint8)
+            return "Lütfen bir rakam çizin.", blank_image
+
+        actual_pil_image = None
+        if isinstance(img_input, dict):
+            print(f"DEBUG: Girdi bir sözlük. Anahtarlar: {list(img_input.keys())}")
+            if 'image' in img_input and isinstance(img_input['image'], Image.Image):
+                actual_pil_image = img_input['image']
+            elif 'composite' in img_input and isinstance(img_input['composite'], Image.Image):
+                actual_pil_image = img_input['composite']
+            else:
+                for value in img_input.values():
+                    if isinstance(value, Image.Image):
+                        actual_pil_image = value
+                        break
+                if actual_pil_image is None:
+                    blank_image = np.zeros((8, 8), dtype=np.uint8)
+                    return "Hata: Sözlükten PIL Image çıkarılamadı.", blank_image
+        elif isinstance(img_input, Image.Image):
+            actual_pil_image = img_input
+        else:
+            blank_image = np.zeros((8, 8), dtype=np.uint8)
+            return f"Hata: Beklenmeyen giriş tipi: {type(img_input)}.", blank_image
+        
+        if actual_pil_image is None:
+            blank_image = np.zeros((8, 8), dtype=np.uint8)
+            return "Hata: Geçerli bir görsel işlenemedi.", blank_image
+
+        img_gray = actual_pil_image.convert("L") # Siyah çizgi (~0), beyaz zemin (~255)
+        img_inverted = ImageOps.invert(img_gray) # Beyaz çizgi (~255), siyah zemin (~0)
+        img_resized = img_inverted.resize((8, 8), Image.Resampling.LANCZOS)
+        img_array = np.array(img_resized) # uint8, 0-255 aralığında
+
+      
+        img_normalized_for_model = (img_array / 255.0) * 16.0
+        img_normalized_for_model = np.clip(img_normalized_for_model, 0, 16)
+        
+        img_flat = img_normalized_for_model.flatten().reshape(1, -1)
+        prediction = model.predict(img_flat)[0]
+    
+        img_for_display = (img_normalized_for_model / 16.0) * 255.0
+        img_for_display = img_for_display.astype(np.uint8)
+
+        return f"✏️ Tahmin edilen rakam: {prediction}", img_for_display
+
+    except Exception as e:
+        print(f"predict_digit_and_visualize fonksiyonunda hata: {e}")
+        traceback.print_exc()
+        blank_image = np.zeros((8,8), dtype=np.uint8) 
+        return f"İşlem sırasında bir hata oluştu: {str(e)}", blank_image
+
+with gr.Blocks() as demo:
+    gr.Markdown(f"# ✍️ El Yazısı Rakam Tanıyıcı\nModelin test seti doğruluğu (konsolda yazıyor): {test_accuracy:.4f}")
+    gr.Markdown("Tuvale 0-9 arasında bir rakam çizin. Modelin \"gördüğü\" 8x8 işlenmiş görüntüyü aşağıda kontrol edin.")
+    
+    with gr.Row():
+        sketchpad = gr.Sketchpad(
+            label="Çizim Alanı",
+            height=280, 
+            width=280,
+            type="pil",
+            image_mode="L" 
+        )
+        with gr.Column():
+            output_textbox = gr.Textbox(label="Tahmin")
+            processed_image_display = gr.Image(
+                label="İşlenmiş Görüntü (Modelin Gördüğü - 8x8)",
+                height=150, 
+                width=150,
+                image_mode="L" 
+            )
+            
+    btn = gr.Button("Tahmin Et")
+  
+    btn.click(fn=predict_digit_and_visualize, inputs=sketchpad, outputs=[output_textbox, processed_image_display])
+
+demo.launch() 
