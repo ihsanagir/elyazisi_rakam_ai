@@ -8,9 +8,10 @@
 ## After fixing the errors and saving them, the model can be retrained with the updated data at the push of a button.
 ## The newly trained model continuously improves itself, becoming a better AI program over time.
 
-![Ekran görüntüsü 2025-05-20 213057](https://github.com/user-attachments/assets/b6540864-32ce-48f4-bcf0-1879911f6adf)
+![Ekran görüntüsü 2025-05-21 122249](https://github.com/user-attachments/assets/c56eb76b-ef34-4200-8ddf-25f95d4d03c7)
 
 ## -TR-
+
 ## Bu yapay zeka kodlaması el yazısıyla yazılan rakamları algılayıp değerlerini tahmin edebiliyor. 
   ## Kullanmak için öncelikle;
 !pip install gradio
