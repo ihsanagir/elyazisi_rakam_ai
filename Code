@@ -5,11 +5,11 @@ from sklearn.model_selection import train_test_split
 from PIL import Image, ImageOps
 import gradio as gr
 import traceback
-import json 
+import json
 
 digits = load_digits()
-X_initial = digits.images 
-y_initial = digits.target  
+X_initial = digits.images
+y_initial = digits.target
 X_flat_initial = X_initial.reshape((X_initial.shape[0], -1))
 
 X_train_initial, X_test_initial, y_train_initial, y_test_initial = train_test_split(
@@ -22,7 +22,7 @@ test_accuracy = model.score(X_test_initial, y_test_initial)
 print(f"Modelin başlangıçtaki load_digits test seti doğruluğu: {test_accuracy:.4f}")
 
 COLLECTED_DATA_FILE = "collected_handwritten_data.json"
-new_collected_data = [] 
+new_collected_data = []
 
 def save_collected_data():
     """Toplanan verileri JSON dosyasına kaydeder."""
@@ -56,13 +56,13 @@ def _get_pil_image_from_gradio_input(img_input):
     """
     if img_input is None:
         return None, "Lütfen bir rakam çizin."
-    
+
     actual_pil_image = None
-    if isinstance(img_input, dict): 
-        img_key = 'composite' if 'composite' in img_input else 'image' 
+    if isinstance(img_input, dict):
+        img_key = 'composite' if 'composite' in img_input else 'image'
         if img_key in img_input and isinstance(img_input[img_key], Image.Image):
             actual_pil_image = img_input[img_key]
-        else: 
+        else:
             for value in img_input.values():
                 if isinstance(value, Image.Image):
                     actual_pil_image = value
@@ -73,17 +73,17 @@ def _get_pil_image_from_gradio_input(img_input):
         actual_pil_image = img_input
     else:
         return None, f"Hata: Beklenmeyen giriş tipi: {type(img_input)}."
-    
-    if actual_pil_image is None: 
+
+    if actual_pil_image is None:
         return None, "Hata: Geçerli bir görsel işlenemedi."
-        
+
     return actual_pil_image, None
 
 def predict_digit_and_update_ui(img_input):
     try:
         actual_pil_image, error_msg = _get_pil_image_from_gradio_input(img_input)
-        
-        if error_msg: 
+
+        if error_msg:
             return (error_msg, None,
                     gr.update(visible=False, value=None), gr.update(visible=False),
                     error_msg)
@@ -100,10 +100,10 @@ def predict_digit_and_update_ui(img_input):
 
         img_normalized_for_model = (img_array / 255.0) * 16.0
         img_normalized_for_model = np.clip(img_normalized_for_model, 0, 16)
-        
+
         img_flat_for_prediction = img_normalized_for_model.flatten().reshape(1, -1)
         prediction = model.predict(img_flat_for_prediction)[0]
-            
+
         img_flat_for_state = img_normalized_for_model.flatten()
 
         return (f"✏️ Tahmin edilen rakam: {prediction}", img_flat_for_state,
@@ -118,20 +118,20 @@ def predict_digit_and_update_ui(img_input):
         return (error_message_ui, None,
                 gr.update(visible=False, value=None), gr.update(visible=False),
                 error_message_ui)
-        
+
 def handle_save_correction(img_data_to_save, confirmed_digit_str):
     global new_collected_data
-    if img_data_to_save is None or not confirmed_digit_str: 
+    if img_data_to_save is None or not confirmed_digit_str:
         return "Kaydedilecek veri bulunamadı veya doğru rakam seçilmedi."
     try:
-        image_data_list = np.array(img_data_to_save).tolist() 
+        image_data_list = np.array(img_data_to_save).tolist()
         correct_label = int(confirmed_digit_str)
 
         new_collected_data.append({'image_data': image_data_list, 'label': correct_label})
         save_collected_data()
-        
+
         return f"✅ Düzeltme '{correct_label}' olarak kaydedildi! Toplam {len(new_collected_data)} örnek."
-    except ValueError: 
+    except ValueError:
         return "⚠️ Geçersiz rakam formatı. Lütfen bir sayı seçin."
     except Exception as e:
         print(f"Düzeltme kaydedilirken hata: {e}")
@@ -140,34 +140,34 @@ def handle_save_correction(img_data_to_save, confirmed_digit_str):
 
 def retrain_model_with_collected_data():
     global model, new_collected_data, X_flat_initial, y_initial, test_accuracy, X_test_initial, y_test_initial
-    
+
     if not new_collected_data:
-        return "Yeniden eğitmek için henüz toplanmış yeni veri yok." 
-    
+        return "Yeniden eğitmek için henüz toplanmış yeni veri yok."
+
     try:
         additional_X_list = [item['image_data'] for item in new_collected_data]
         additional_y_list = [item['label'] for item in new_collected_data]
-        
+
         if not additional_X_list:
              return "Toplanan veride geçerli örnek bulunamadı."
 
         additional_X = np.array(additional_X_list)
         additional_y = np.array(additional_y_list)
-        
+
         combined_X_data = np.vstack((X_flat_initial, additional_X))
         combined_y_data = np.concatenate((y_initial, additional_y))
-        
+
         print(f"Model yeniden eğitiliyor... Orijinal: {len(X_flat_initial)}, Yeni: {len(additional_X)}, Toplam: {len(combined_X_data)} örnek.")
-        
+
         new_model = RandomForestClassifier(n_estimators=100, random_state=42)
         new_model.fit(combined_X_data, combined_y_data)
         model = new_model
-        
+
         current_accuracy = model.score(X_test_initial, y_test_initial)
-        test_accuracy = current_accuracy 
-        
-        print(f"Modelin güncel doğruluğu (orijinal test setinde): {test_accuracy:.4f}") 
-        
+        test_accuracy = current_accuracy
+
+        print(f"Modelin güncel doğruluğu (orijinal test setinde): {test_accuracy:.4f}")
+
         return f"🧠 Model {len(additional_X)} yeni örnekle başarıyla yeniden eğitildi! (Toplam {len(combined_X_data)} örnek kullanıldı)."
     except Exception as e:
         print(f"Model yeniden eğitilirken hata: {e}")
@@ -175,13 +175,13 @@ def retrain_model_with_collected_data():
         return f"⚠️ Model yeniden eğitilemedi: {str(e)}"
 
 def clear_interface_elements():
-    global new_collected_data 
+    global new_collected_data
     return (
-        None,  
-        "",    
-        None,  
-        gr.update(visible=False, value=None),  
-        gr.update(visible=False),  
+        None,
+        "",
+        None,
+        gr.update(visible=False, value=None),
+        gr.update(visible=False),
         f"{len(new_collected_data)} adet örnek yüklendi/toplandı." )
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
@@ -189,15 +189,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
     gr.Markdown("Aşağıdaki tuvale 0-9 arasında bir rakam çizin. Modelin tahminini kontrol edin. Yanlışsa düzeltip kaydedebilirsiniz. Kaydedilen düzeltilmiş verilerle modeli yeniden eğiterek performansını artırabilirsiniz.")
 
-    img_flat_state = gr.State() 
+    img_flat_state = gr.State()
 
     with gr.Row():
         with gr.Column(scale=1):
             sketchpad = gr.Sketchpad(
                 label="Çizim Alanı (Siyahla Çizin)",
-                height=320, 
+                height=320,
                 width=320,
-                type="pil", 
+                type="pil",
                 image_mode="RGBA" )
             predict_btn = gr.Button("🔄 Tahmin Et", variant="primary")
             clear_btn = gr.Button("Temizle")
@@ -205,35 +205,35 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         with gr.Column(scale=1):
             output_textbox = gr.Textbox(label="Model Tahmini", interactive=False)
             retrain_button = gr.Button("🧠 Modeli Toplanan Veriyle Yeniden Eğit", variant="stop")
-    
-    gr.Markdown("---") 
+
+    gr.Markdown("---")
     gr.Markdown("### 🧐 Tahmini Düzelt ve Kaydet")
-    
+
     with gr.Row():
         corrected_digit_input = gr.Dropdown(
             choices=[str(i) for i in range(10)],
             label="Doğru Rakam:",
-            visible=False, 
+            visible=False,
             interactive=True)
         save_button = gr.Button("💾 Düzeltmeyi Kaydet", variant="secondary", visible=False, interactive=True)
-    
+
     status_textbox = gr.Textbox(label="İşlem Durumu", interactive=False, value=f"{len(new_collected_data)} adet örnek yüklendi/toplandı.")
- 
+
     predict_btn.click(
         fn=predict_digit_and_update_ui,
         inputs=sketchpad,
         outputs=[output_textbox, img_flat_state, corrected_digit_input, save_button, status_textbox] )
-    
+
     save_button.click(
         fn=handle_save_correction,
         inputs=[img_flat_state, corrected_digit_input],
         outputs=[status_textbox])
 
     clear_btn.click(
-        fn=clear_interface_elements, 
-        inputs=None, 
+        fn=clear_interface_elements,
+        inputs=None,
         outputs=[sketchpad, output_textbox, img_flat_state, corrected_digit_input, save_button, status_textbox])
-    
+
     retrain_button.click(
         fn=retrain_model_with_collected_data,
         outputs=[status_textbox] )
