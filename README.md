@@ -1,23 +1,80 @@
-## elyazisi_rakam_ai
-## -EN-
-## This artificial intelligence program can recognize handwritten digits and predict their values.
-## To use it, you first need to install the web interface support library by running the following command:
-!pip install gradio
+# ✍️ Handwritten Digit Recognition — AI (Nottingham ML Internship)
 
-## The AI can also correct its own prediction errors and upload them to the dataset.
-## After fixing the errors and saving them, the model can be retrained with the updated data at the push of a button.
-## The newly trained model continuously improves itself, becoming a better AI program over time.
+> Deep Learning model that recognizes handwritten digits with **94% test accuracy**, featuring a self-improving loop via Gradio web interface. Developed during ML Internship at **University of Nottingham** (July–August 2024).
 
-![Ekran görüntüsü 2025-05-21 122249](https://github.com/user-attachments/assets/c56eb76b-ef34-4200-8ddf-25f95d4d03c7)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)](https://python.org)
+[![PyTorch](https://img.shields.io/badge/PyTorch-CNN-red?logo=pytorch)](https://pytorch.org)
+[![OpenCV](https://img.shields.io/badge/OpenCV-Image%20Processing-green?logo=opencv)](https://opencv.org)
 
-## -TR-
+---
 
-## Bu yapay zeka kodlaması el yazısıyla yazılan rakamları algılayıp değerlerini tahmin edebiliyor. 
-  ## Kullanmak için öncelikle;
-!pip install gradio
-  ## Kodunu kullanarak web arayüz destekleyici kütüphanemizi yazılım dilimize yüklememiz gerekiyor.
-  ## Ayrıca tahminlerinde yaptığı hataları düzelterek veri setine yükleyebiliyor.
-  ## Hatalarını düzeltip kaydettikten sonra modeli toplanan veriyle sadece bir tuşla yeniden eğitebiliyoruz.
-  ## Eğitilen yeni modelimiz sürekli kendini güncelleyerek daha iyi bir yapay zeka programı haline geliyor.
-  
+## 📊 Model Performance
 
+| Metric | Value |
+|---|---|
+| Test Accuracy | **94%** |
+| Architecture | CNN (Convolutional Neural Network) |
+| Framework | PyTorch |
+| Preprocessing | OpenCV normalization & augmentation |
+
+---
+
+## 🧠 Features
+
+- **Digit Recognition:** Predicts handwritten digits (0–9) from user input
+- **Self-Improving Loop:** Users can correct mispredictions → corrections are added to the dataset → model retrains with one button click
+- **Web Interface:** Gradio-based UI for drawing digits and reviewing predictions
+
+---
+
+## 🛠️ Tech Stack
+
+```
+Deep Learning    →  PyTorch · CNN Architecture
+Image Processing →  OpenCV · NumPy · Pillow
+Web Interface    →  Gradio
+Evaluation       →  Precision · Recall · F1-Score · Accuracy
+```
+
+---
+
+## ⚙️ Installation
+
+```bash
+git clone https://github.com/ihsanagir/elyazisi_rakam_ai.git
+cd elyazisi_rakam_ai
+pip install -r requirements.txt
+```
+
+**Run the app:**
+```bash
+python app.py
+```
+
+---
+
+## 🖥️ Screenshot
+
+![App Screenshot](https://github.com/user-attachments/assets/c56eb76b-ef34-4200-8ddf-25f95d4d03c7)
+
+---
+
+## 🔬 How It Works
+
+1. **Preprocessing:** Input images are normalized and augmented using OpenCV
+2. **Inference:** CNN model predicts the digit class
+3. **Correction:** User marks incorrect predictions via the Gradio interface
+4. **Retraining:** Corrected samples are added to the training set; model retrains in one click
+5. **Improvement:** Each retraining cycle improves model performance over time
+
+---
+
+## 🌐 Context
+
+This project was developed during an international **Machine Learning Internship at the University of Nottingham** as part of research into 3D manufacturing technology and intelligent recognition systems.
+
+---
+
+## 📄 License
+
+MIT License
